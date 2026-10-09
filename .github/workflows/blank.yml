@@ -18,8 +18,8 @@ jobs:
 
       - name: Configurar Git Buffer Extremo
         run: |
-          git config --global user.name "TU_OTRO_USUARIO"
-          git config --global user.email "tu_otro_correo@gmail.com"
+          git config --global user.name "bustoschilatra-sudo"
+          git config --global user.email "bustoschilatra@gmail.com"
           git config --global http.postBuffer 1048576000
           git config --global core.compression 9
 
