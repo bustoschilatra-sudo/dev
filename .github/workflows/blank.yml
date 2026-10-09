@@ -1,4 +1,4 @@
-name: Sobrecarga Maxima - Año Verde Total
+name: Sobrecarga Acumulativa - Suma en Cada Ejecucion
 
 on:
   workflow_dispatch:
@@ -23,27 +23,33 @@ jobs:
           git config --global http.postBuffer 1048576000
           git config --global core.compression 9
 
-      - name: Inyectar Commits
+      - name: Inyectar Commits Acumulativos
         run: |
           python3 << 'PYEOF'
-          import subprocess, time
+          import subprocess, time, random
           from datetime import datetime, timedelta
 
           AUTHOR_NAME = "bustoschilatra-sudo"
           AUTHOR_EMAIL = "bustoschilatra@gmail.com"
 
           DIAS = 365
-          # 100 commits por dia = 36,500 en total (satura verde oscuro al maximo sin disparar alertas)
-          COMMITS_DIA = 2740
+          COMMITS_DIA = 100
 
           today = datetime.now()
+          # Semilla unica para que nunca genere commits duplicados
+          BATCH = random.randint(100000, 999999)
           
+          # Detectar el ultimo commit existente para encadenar
+          res = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True)
+          last_commit = res.stdout.strip() if res.returncode == 0 else None
+
           p = subprocess.Popen(['git', 'fast-import', '--date-format=raw'], stdin=subprocess.PIPE, text=True)
 
           mark = 1
+          parent_sha = last_commit
           parent_mark = None
 
-          print(f"Generando {DIAS * COMMITS_DIA} commits...")
+          print(f"Generando lote acumulativo #{BATCH} de {DIAS * COMMITS_DIA} commits...")
 
           for d in range(DIAS, 0, -1):
               target_date = today - timedelta(days=d)
@@ -57,12 +63,14 @@ jobs:
                   stream += f"mark :{mark}\n"
                   stream += f"author {AUTHOR_NAME} <{AUTHOR_EMAIL}> {commit_time} {tz}\n"
                   stream += f"committer {AUTHOR_NAME} <{AUTHOR_EMAIL}> {commit_time} {tz}\n"
-                  stream += f"data 16\nfeat: push limit\n"
+                  stream += f"data 18\nfeat: batch boost\n"
                   
                   if parent_mark is not None:
                       stream += f"from :{parent_mark}\n"
+                  elif parent_sha:
+                      stream += f"from {parent_sha}\n"
                   
-                  file_content = f"{d}-{c}\n"
+                  file_content = f"batch-{BATCH}-{d}-{c}\n"
                   stream += f"M 644 inline data.txt\n"
                   stream += f"data {len(file_content)}\n{file_content}\n"
 
@@ -75,10 +83,10 @@ jobs:
 
           p.stdin.close()
           p.wait()
-          print("Base de datos Git inyectada.")
+          print("Lote generado con éxito.")
           PYEOF
 
-      - name: Push a GitHub
+      - name: Push Acumulativo a GitHub
         run: |
-          git checkout -B main refs/heads/main
-          git push --force origin main
+          git checkout main || git checkout -B main refs/heads/main
+          git push origin main
