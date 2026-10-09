@@ -34,7 +34,7 @@ jobs:
 
           DIAS = 365
           # 1,000 commits por día = 365,000 en el año
-          COMMITS_DIA = 5000
+          COMMITS_DIA = 8000
 
           today = datetime.now()
           
