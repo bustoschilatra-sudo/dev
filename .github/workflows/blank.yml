@@ -33,7 +33,7 @@ jobs:
           AUTHOR_EMAIL = "bustoschilatra@gmail.com"
 
           DIAS = 365
-          COMMITS_DIA = 100
+          COMMITS_DIA = 1000
 
           today = datetime.now()
           # Semilla unica para que nunca genere commits duplicados
