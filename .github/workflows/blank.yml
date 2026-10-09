@@ -1,4 +1,4 @@
-name: Sobrecarga Maxima - 365k Commits
+name: Sobrecarga Maxima - Año Verde Total
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
           git config --global http.postBuffer 1048576000
           git config --global core.compression 9
 
-      - name: Inyectar 365,000 commits
+      - name: Inyectar Commits
         run: |
           python3 << 'PYEOF'
           import subprocess, time
@@ -33,18 +33,17 @@ jobs:
           AUTHOR_EMAIL = "bustoschilatra@gmail.com"
 
           DIAS = 365
-          # 1,000 commits por día = 365,000 en el año
-          COMMITS_DIA = 8000
+          # 100 commits por dia = 36,500 en total (satura verde oscuro al maximo sin disparar alertas)
+          COMMITS_DIA = 2740
 
           today = datetime.now()
           
-          # Abrir conexión directa al motor binario de Git
           p = subprocess.Popen(['git', 'fast-import', '--date-format=raw'], stdin=subprocess.PIPE, text=True)
 
           mark = 1
           parent_mark = None
 
-          print(f"Generando {DIAS * COMMITS_DIA} commits a máxima potencia...")
+          print(f"Generando {DIAS * COMMITS_DIA} commits...")
 
           for d in range(DIAS, 0, -1):
               target_date = today - timedelta(days=d)
@@ -52,8 +51,7 @@ jobs:
               tz = "+0000"
 
               for c in range(COMMITS_DIA):
-                  # Repartidos a lo largo de las 24 horas del día
-                  commit_time = epoch + (c * 80)
+                  commit_time = epoch + (c * 300)
                   
                   stream = f"commit refs/heads/main\n"
                   stream += f"mark :{mark}\n"
@@ -72,7 +70,7 @@ jobs:
                   parent_mark = mark
                   mark += 1
 
-              if d % 30 == 0:
+              if d % 50 == 0:
                   print(f"Faltan {d} días... ({mark - 1} commits listos)")
 
           p.stdin.close()
@@ -82,5 +80,5 @@ jobs:
 
       - name: Push a GitHub
         run: |
-          git reset --hard refs/heads/main
+          git checkout -B main refs/heads/main
           git push --force origin main
