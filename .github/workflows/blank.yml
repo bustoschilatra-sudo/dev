@@ -1,0 +1,86 @@
+name: Sobrecarga Maxima - 365k Commits
+
+on:
+  workflow_dispatch:
+
+jobs:
+  saturar-ano:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
+
+      - name: Configurar Git Buffer Extremo
+        run: |
+          git config --global user.name "TU_OTRO_USUARIO"
+          git config --global user.email "tu_otro_correo@gmail.com"
+          git config --global http.postBuffer 1048576000
+          git config --global core.compression 9
+
+      - name: Inyectar 365,000 commits
+        run: |
+          python3 << 'PYEOF'
+          import subprocess, time
+          from datetime import datetime, timedelta
+
+          AUTHOR_NAME = "TU_OTRO_USUARIO"
+          AUTHOR_EMAIL = "tu_otro_correo@gmail.com"
+
+          DIAS = 365
+          # 1,000 commits por día = 365,000 en el año
+          COMMITS_DIA = 5000
+
+          today = datetime.now()
+          
+          # Abrir conexión directa al motor binario de Git
+          p = subprocess.Popen(['git', 'fast-import', '--date-format=raw'], stdin=subprocess.PIPE, text=True)
+
+          mark = 1
+          parent_mark = None
+
+          print(f"Generando {DIAS * COMMITS_DIA} commits a máxima potencia...")
+
+          for d in range(DIAS, 0, -1):
+              target_date = today - timedelta(days=d)
+              epoch = int(time.mktime(target_date.timetuple()))
+              tz = "+0000"
+
+              for c in range(COMMITS_DIA):
+                  # Repartidos a lo largo de las 24 horas del día
+                  commit_time = epoch + (c * 80)
+                  
+                  stream = f"commit refs/heads/main\n"
+                  stream += f"mark :{mark}\n"
+                  stream += f"author {AUTHOR_NAME} <{AUTHOR_EMAIL}> {commit_time} {tz}\n"
+                  stream += f"committer {AUTHOR_NAME} <{AUTHOR_EMAIL}> {commit_time} {tz}\n"
+                  stream += f"data 16\nfeat: push limit\n"
+                  
+                  if parent_mark is not None:
+                      stream += f"from :{parent_mark}\n"
+                  
+                  file_content = f"{d}-{c}\n"
+                  stream += f"M 644 inline data.txt\n"
+                  stream += f"data {len(file_content)}\n{file_content}\n"
+
+                  p.stdin.write(stream)
+                  parent_mark = mark
+                  mark += 1
+
+              if d % 30 == 0:
+                  print(f"Faltan {d} días... ({mark - 1} commits listos)")
+
+          p.stdin.close()
+          p.wait()
+          print("Base de datos Git inyectada.")
+          PYEOF
+
+      - name: Push a GitHub
+        run: |
+          git reset --hard refs/heads/main
+          git push --force origin main
