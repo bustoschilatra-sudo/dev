@@ -29,8 +29,8 @@ jobs:
           import subprocess, time
           from datetime import datetime, timedelta
 
-          AUTHOR_NAME = "TU_OTRO_USUARIO"
-          AUTHOR_EMAIL = "tu_otro_correo@gmail.com"
+          AUTHOR_NAME = "bustoschilatra-sudo"
+          AUTHOR_EMAIL = "bustoschilatra@gmail.com"
 
           DIAS = 365
           # 1,000 commits por día = 365,000 en el año
